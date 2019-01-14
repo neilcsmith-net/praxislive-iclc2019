@@ -1,0 +1,12 @@
+@ /osc root:osc {
+  #%praxis.version 4.1.0
+  @ ./input1 osc:input {
+    .address /video/p3d.size
+  }
+  @ ./input2 osc:input {
+  }
+  @ ./input3 osc:input {
+  }
+  @ ./input4 osc:input {
+  }
+}

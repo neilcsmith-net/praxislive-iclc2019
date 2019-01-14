@@ -1,0 +1,49 @@
+@ /audio root:audio {
+  #%praxis.version 4.1.1
+  @ ./output-1 audio:output {
+    #%graph.x 643
+    #%graph.y 221
+  }
+  @ ./gain-1 audio:gain {
+    #%graph.x 439
+    #%graph.y 221
+    .level 0.6
+  }
+  @ ./amen audio:custom {
+    #%graph.x 210
+    #%graph.y 221
+    .code "
+
+    @P(1) @ID(\"amen\") @Config.Port(false) AudioTable $;    
+    @Out(1) AudioOut out;
+    @UGen Phasor phasor;
+    
+    @Override
+    public void setup() \{
+        double freq = 0.6;
+        phasor.frequency(freq / 4);
+        Tee t = tee();
+        link(phasor, t);
+        link(t, fn(s -> s*4%1), modFn(t,
+
+                (s,m) -> 0.0
+                                        
+                        
+                + (1.0) * (
+                    (m < 0.75) ?    
+                    tabread($, s) :
+                    tabread($, s%(3./8))
+                )
+                
+                
+                
+                ), out);
+        
+    \}
+"
+    .amen [file "resources/amen.wav"]
+  }
+  ~ ./gain-1!out ./output-1!in-1
+  ~ ./output-1!in-2 ./gain-1!out
+  ~ ./amen!out ./gain-1!in
+}

@@ -1,0 +1,102 @@
+@ /video root:video {
+  #%praxis.version 4.1.1
+  .renderer OpenGL
+  @ ./output-1 video:output {
+    #%graph.x 556
+    #%graph.y 137
+    .always-on-top true
+  }
+  @ ./p3d-1 video:gl:p3d {
+    #%graph.x 76
+    #%graph.y 85
+    .code "
+
+    @P(1)
+    float\[\] fft;   
+    
+    @Override
+    public void draw() \{
+        colorMode(HSB);
+        
+        if (fft.length == 0) \{
+            return;
+        \}
+        lights();
+        int numCircles = 400;
+        double t = sin(millis() / 1000.0 * 0.2);
+        double c = 85;
+        noStroke();
+        translate(width/2, height/2);
+        rotateX(sin(millis() * 0.0003));
+        rotateY(sin(millis() * 0.0004));
+        rotateZ(sin(millis() * 0.0005));
+        scale(abs(sin(millis() * 0.0001)) + 0.8);
+        for (int i = 0; i < numCircles; i++) \{
+            fill( (i * abs(t) % 255), 255, 230);
+            pushMatrix();
+            rotate(radians((t + 37) * i));
+            double audio = dB(fft\[((i/10)%fft.length)\]);
+            translate(sqrt(c*i), sqrt(c*i), audio);
+            rect(-width/4,0,width/2,0.25);
+            sphere(4);
+            popMatrix();
+        \}
+    \}
+    
+    double dB(double x) \{
+        if (x == 0) \{
+            return 0;
+        \} else \{
+            return 10 * Math.log10(x);
+        \}
+    \}
+    
+"
+    .fft "rO0ABXVyAAJbRgucgYki4AxCAgAAeHAAAAIAPYf5Rj0e0i0/OURMPhI7FT4+9Uw/q1D9PyoGoj5+
+zkw/Bl8KPrmY5z8IWbU+1NxiP9l1mUBlfhY+OC9aP4M6fD5SDKM/qP1PPii/JT7SL8Y/Hq88Pty2
+pz2pJE4+vJkqPmrd3z6kiwo9qLVfPg22tT2hmsM9hlhnPbDCuT0VS9s9XcyoPXUQuDznbiM9rCzQ
+PM7d+jxAbdU8vvAYPatQsT4/Yt49ik+1Ph5U8j4j95Q8L2DVPYeXDTwcwOQ8jDv0PUljCz7MMgA9
+x2izPR+ZiDx0Lr48IctSPFMGojtPyQg9M4bcPcgFfj3ODcQ8iOvAPsGU1j6RGqQ9kJVYPxOdCD8O
+s4M9F0qePMa3ST4JqkY+u4PWPeeS6j3uxh4+CSKtPo73kD2aPcI9rMq9Pi/GUzyQk249FiqLPazE
+DD5duk48FG3SPf256T0NlSw9xCiwPDIMhj2qVKI9MZ+0PaWauD9aqbg/SPVaO8Ip1DvuuQ49wnCe
+PgwNEDznMGQ9aGu3Pk0jOj8ATgc7n82+PyVCFD8QnnU+pewVPTAgnz38tzo9uBSuPYdRZj9rlgI/
+t2QsPofjmTz2qvA8rv/OPRG3sDyztoY+D5shPj7Q4j55hvk+ImmjPbhrVz4ldSo7P6kDPVSE7D18
+Q6A91JSBPWrWRj3Fa+w+GhHxPVlrnj0ZkQ48CwnbPJ9utTy0Hd89NBIMPa6J5DzUUJo8v2suPPiQ
+uz2H8lA8XjhYP0O/oD8kl5Q95U9+PduuVDzZ+FU9qiHePKqb+j6KIy0+l+BWPg/Itjuv4mw85A12
+PIcRuzw9E8o8dWDWPL+++TyTNlQ98lBlPIWADD2zn8I9cB9SO9J3jzwptLk7pQB5OiiG3z1Hhzo9
+yNjSPQONmjvK3TY8+BzOPUaU/jwGQPY9nMZePxEEjT7UsFo80jn7Pa9sCD3Zt3g+MOb2PNNFKz14
+7sM8fAA6PfVCvj3Mn+c9kajUPRaxTD041UI9EF3UPHpisjsDhYA8pYfHPZCSXjvs4h87r0D8O736
+WjpU/To87pJmPTudIjwo3j47xrJWPDsEVTzugMo8RfwUPJUPKD0vyuw7MQ2+PI5aDjk/Ofo8DiF5
+OqSxlzgYwoo7myV8PEQkHDuq6wM9Tr+PO2jtBTzzJ4Y8gUYFOpO5KDvZFdY71Eh1Oo5vEjprEMY8
+iBU0O/XKZDyfH/A8zAGXPPSrZDsrF7A8IBVyOyrbSjopp8Y5yjZ9O8jKsTqx2o08mYZuPFyjgzy4
+usI77Dv/O11sIzekEfE7Kxp2O8nKmTsIaZY56a8AOtrD8zrR9GU54/wCOiI0PznrIsg7usKsPEkM
+HztRuBo6L6ZGOraYyzu+otQ7SQEhOz9UHDm52f45ah1SOY5QkTrWjoI7VLjGOiE4+Trllt07DJsA
+O1WxaDnKXjo7ecZXOjx/GDt1av08C8zIOsIWMjkHrXs6u8pKOKjaIjqHYSQ6Gkv0OnrvBjgDtOU4
+/6TuOhb6bToDUBY5DZEdODs2TDnGqzs4YU/xOjI5FjoZ3oQ7gco9OoBVHDop5xM6Zv5GOmRZpDo8
+6lA5wnK4Nvpz7zovmtU52+dJOgfRfTpB6/Y5m5JeOhCCtDpa19g5gpMyOT4thThKssA5GiDcOqCI
+zTnZXQc4WPFAOdStkDiv7XI3ALVQOYEDUDhcrEk6aNPNOgozxTjNiAg462E9Oj86mzpRUaI50gRG
+OVD/+jiLkWI3f6yNOQm7QTlmAM06H25gODnxZznd+U45GNr8Nwconje89mc4PcwSOTPi0zmGN4o2
+CQu9OeNPmzlGhIc6JAnYOQvb5DlP7IE4s2H7OLl8AjhsNOo5M9lxOAZtwjfIslQ5iKoCOM/9sDaZ
+l/g4LtNPOGrfhjlbj5I5VIUWOjI+Qzj95mU5hDF9ORYFmTmx8zQ4zosxOI4zWjlAk7w5euX+ONkd
+zDloXjs6AEItOF1gmTl4iYw6DQlyOEbCRDaNg1o4n05POSmDqTkvxnE4VeDUN6WHZjm8t7s39ItW
+N7xBtjmumW05BE30OYmuDDjKf2s3h6J+OMmrSDj0x6E4VrswOMrYTzjiDW44hS0vNy7jvDnQJ1M5
+XThbOJiZmTeyjHA5P7MeOZtYtTjQvnI5Y256N4S9Szj0wv45FRJ+NxEirjmJ8xk44WeYOC5OhjlN
+UGU4wN1KOFFU7Diejvk40gikONddoDh2w9w6D2pKObDlITlrL+g4P8XyOdeTNzi115A6SkhWNexU
+gjlzokA4Q2djORt6ODfTsFQ4nbAtN0NivDlnpyc5kXkROKKEdDi5hnE3kAbOOPVwuDldSMk5yXiZ
+OXLkFDgGp9o4PWV7ObMhVDkt+AY5ax5lN6Vn/jnNDLA4n2YUN0kCoDjnUuM2yzGSOjnAKDoMQzw4
+Fb+2OQIyDDkDZTo5OylVOQumjDlTAWY5LqNQONQrgDkQdNE41wrcOUZRCThF06g5LwqgN9wllThj
+W8o4C/Q/OJSeMjkfIeU4yBb7OHLpGTcjL+k43PUIOS+wfDlWfWg5tOGcN5J7OjjdrXA5ThALOKsz
+vzkcKuc5c0TAONKrqDcgZuA5XPq/Oajx1zd/GMA5qxk5OEF2jjhq5HY3I/hYN0C7ljjf3Ag5URsc
+OYCd1TolXoY4gAtSOTLCIThvhe459Zy4OMybijk0eh44B9prOKcwqDeh0oo4byTCOF/9vDibVUw3
+uCGPOUvBrzlnErU3tCJ7N9FPAjoFnpY="
+  }
+  @ ./composite-1 video:composite {
+    #%graph.x 274
+    #%graph.y 85
+    .mode Add
+    .mix 0.5
+  }
+  ~ ./composite-1!out ./output-1!in
+  ~ ./p3d-1!out ./composite-1!in
+  ~ ./composite-1!out ./composite-1!src
+}

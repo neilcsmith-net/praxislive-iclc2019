@@ -1,0 +1,9 @@
+add-libs [file-list "config/libs/*.jar"]
+
+# <<<BUILD>>>
+include [file "osc.pxr"]
+include [file "video.pxr"]
+
+# <<<RUN>>>
+include [file "config/osc_autostart"]
+include [file "config/video_autostart"]

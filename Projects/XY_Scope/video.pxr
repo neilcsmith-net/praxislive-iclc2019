@@ -1,0 +1,131 @@
+@ /video root:video {
+  #%autostart true
+  #%praxis.version 4-SNAPSHOT
+  .renderer OpenGL
+  .width 500
+  .height 500
+  .fps 60.0
+  @ ./screen video:output {
+    #%graph.x 600
+    #%graph.y 200
+    .always-on-top true
+    .show-cursor true
+  }
+  @ ./p2d-1 video:gl:p2d {
+    #%graph.x 274
+    #%graph.y 200
+    .code "
+
+    final int trailSize = 150;
+
+    @P(1) @Type.Number(min = 0, max = 1, def = 0.5) double x;
+    @P(2) @Type.Number(min = 0, max = 1, def = 0.5) double y;
+    
+    @Inject double angle1, angle2, phase;
+    @Inject Ref<List<PVector>> data;
+
+    @Override
+    public void setup() \{
+        data.init(ArrayList::new);
+    \}
+
+    
+    
+    @Override
+    public void draw() \{
+        strokeWeight(2);
+        
+        int trailLength;
+
+        double ang1 = radians(angle1);
+        double ang2 = radians(angle2);
+
+        double x1 = width * 0.5 + (x * 0.5 * width * sin(ang1 + phase));
+        double y1 = height * 0.5 + (y * 0.5 * height * cos(ang2));
+
+        PVector circlePosition = new PVector(x1, y1);
+
+        List<PVector> circleTrail = data.get();
+        
+        circleTrail.add(circlePosition);
+
+        trailLength = circleTrail.size() - 2;
+
+        for (int i = 0; i < trailLength; i++) \{
+            PVector currentTrail = circleTrail.get(i);
+            PVector previousTrail = circleTrail.get(i + 1);
+
+            stroke(0, 127, 255, 255 * i / trailLength);
+
+            line(currentTrail.x, currentTrail.y,
+                    previousTrail.x, previousTrail.y);
+        \}
+
+        if (trailLength >= trailSize) \{
+            circleTrail.remove(0);
+        \}
+
+        angle1 += 10;
+        angle2 += 15;
+        phase += 0.0025;
+
+    \}
+"
+    .x 0.09975585922556579
+    .y 0.029257855167636033
+  }
+  @ ./p2d-2 video:gl:p2d {
+    #%graph.x 290
+    #%graph.y 380
+    .code "
+
+    final int trailSize = 50;
+
+//    @P(1) @Type.Number(min = 0, max = 1, def = 0.5) double x;
+//    @P(2) @Type.Number(min = 0, max = 1, def = 0.5) double y;
+    
+    @Inject double angle1, angle2, phase;
+    @Inject List<PVector> circleTrail;
+
+    @Override
+    public void draw() \{
+        strokeWeight(2);
+        
+        int trailLength;
+
+        double ang1 = radians(angle1);
+        double ang2 = radians(angle2);
+
+        double x1 = width * 0.5 + (150 * sin(ang1 + phase));
+        double y1 = height * 0.5 + (150 * cos(ang2));
+
+        PVector circlePosition = new PVector(x1, y1);
+
+        circleTrail.add(circlePosition);
+
+        trailLength = circleTrail.size() - 2;
+
+        for (int i = 0; i < trailLength; i++) \{
+            PVector currentTrail = circleTrail.get(i);
+            PVector previousTrail = circleTrail.get(i + 1);
+
+            stroke(255, 127, 0, 255 * i / trailLength);
+
+            line(currentTrail.x, currentTrail.y,
+                    previousTrail.x, previousTrail.y);
+        \}
+
+        if (trailLength >= trailSize) \{
+            circleTrail.remove(0);
+        \}
+
+        angle1 += 10;
+        angle2 += 15;
+        phase += 0.0025;
+
+    \}
+"
+  }
+  ~ ./p2d-1!out ./screen!in
+  ~ ./p2d-2!out ./screen!in
+}

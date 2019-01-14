@@ -1,0 +1,37 @@
+@ /video root:video {
+  #%autostart true
+  #%praxis.version 4.1.0
+  .renderer OpenGL
+  .width 800
+  .height 600
+  .fps 60.0
+  @ ./screen video:output {
+    #%graph.x 424
+    #%graph.y 200
+    .always-on-top true
+    .show-cursor true
+  }
+  @ ./p3d video:gl:p3d {
+    #%graph.x 111
+    #%graph.y 200
+    #%graph.comment Right-click on this node\nand choose \"Edit code\"\n\nUse Save or CTRL-S\nin the code editor to\nlive update the sketch
+    .code "
+
+    @P(1) double size;
+    
+    @Override
+    public void setup() \{
+        noFill();
+        stroke(255);
+    \}
+
+    @Override
+    public void draw() \{
+        translate(width/2, height/2);
+        sphere(size * height/2);
+    \}
+"
+    .size 0.5
+  }
+  ~ ./p3d!out ./screen!in
+}

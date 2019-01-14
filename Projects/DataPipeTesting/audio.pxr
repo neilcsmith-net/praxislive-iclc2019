@@ -1,0 +1,350 @@
+@ /audio root:audio {
+  #%autostart true
+  #%praxis.version 4.1.1
+  @ ./output audio:output {
+    #%graph.x 1023
+    #%graph.y 215
+  }
+  @ ./mixer-6s audio:custom {
+    #%graph.x 752
+    #%graph.y 155
+    .code "
+
+    @In(1) AudioIn in1l;
+    @In(2) AudioIn in1r;
+    @In(3) AudioIn in2l;
+    @In(4) AudioIn in2r;
+    @In(5) AudioIn in3l;
+    @In(6) AudioIn in3r;
+    @In(7) AudioIn in4l;
+    @In(8) AudioIn in4r;
+    @In(9) AudioIn in5l;
+    @In(10) AudioIn in5r;
+    @In(11) AudioIn in6l;
+    @In(12) AudioIn in6r;
+    
+    @Out(1) AudioOut out1;
+    @Out(2) AudioOut out2;
+    
+    @P(1) @Type.Number(min=0, max=2, skew=4) double level1;
+    @P(2) @Type.Number(min=0, max=2, skew=4) double level2;
+    @P(3) @Type.Number(min=0, max=2, skew=4) double level3;
+    @P(4) @Type.Number(min=0, max=2, skew=4) double level4;
+    @P(5) @Type.Number(min=0, max=2, skew=4) double level5;
+    @P(6) @Type.Number(min=0, max=2, skew=4) double level6;
+    
+    @P(7) boolean mute1;
+    @P(8) boolean mute2;
+    @P(9) boolean mute3;
+    @P(10) boolean mute4;
+    @P(11) boolean mute5;
+    @P(12) boolean mute6;
+    
+    @UGen Gain g1l,g1r,g2l,g2r,g3l,g3r,g4l,g4r,g5l,g5r,g6l,g6r;
+    
+    @Override
+    public void setup() \{
+        link(
+            add(
+                link(in1l, g1l),
+                link(in2l, g2l),
+                link(in3l, g3l),
+                link(in4l, g4l),
+                link(in5l, g5l),
+                link(in6l, g6l)
+            ),
+            out1
+        );
+        link(
+            add(
+                link(in1r, g1r),
+                link(in2r, g2r),
+                link(in3r, g3r),
+                link(in4r, g4r),
+                link(in5r, g5r),
+                link(in6r, g6r)
+            ),
+            out2
+        );
+    \}
+
+    @Override
+    public void update() \{
+        g1l.level(mute1 ? 0 : level1);
+        g1r.level(mute1 ? 0 : level1);
+        g2l.level(mute2 ? 0 : level2);
+        g2r.level(mute2 ? 0 : level2);
+        g3l.level(mute3 ? 0 : level3);
+        g3r.level(mute3 ? 0 : level3);
+        g4l.level(mute4 ? 0 : level4);
+        g4r.level(mute4 ? 0 : level4);
+        g5l.level(mute5 ? 0 : level5);
+        g5r.level(mute5 ? 0 : level5);
+        g6l.level(mute6 ? 0 : level6);
+        g6r.level(mute6 ? 0 : level6);
+    \}
+"
+    .level-1 0.25
+    .level-2 0.25
+    .level-3 0.25
+  }
+  @ ./fn-provider core:custom {
+    #%graph.x 138
+    #%graph.y 140
+    .code "
+
+    @Out(1) Data.Out<DoubleUnaryOperator> fn;
+    
+    @Override
+    public void init() \{
+        Data.link(
+                Data.supply(() -> this::process),
+                fn);
+    \}
+
+    double process(double d) \{
+        return sin((sin(cos(d*QUARTER_PI))*PI) * TWO_PI);
+    \}
+    
+"
+  }
+  @ ./synth1 audio:custom {
+    #%graph.x 427
+    #%graph.y 155
+    .code "
+
+    @Out(1) AudioOut out;
+    
+    
+    
+    @P(1) @Type.Number(min=0, max=1, def=1, skew=4)
+    double gain;
+    @P(2)    
+    @Type.Number(min = 0, max = 2, def = 0)
+    double glide;
+    
+    
+    @AuxIn(1) Data.In<DoubleUnaryOperator> fnIn;
+
+    @UGen Phasor phasor;
+    @UGen Gain amp;
+    
+    @Inject Property frequency;
+    @Inject Property envelope;
+    
+    @Inject Data.Sink<DoubleUnaryOperator> fnSink;
+    
+    DoubleUnaryOperator fn = DoubleUnaryOperator.identity();
+    
+    @Override
+    public void setup() \{
+        link(phasor, fn(d -> fn.applyAsDouble(d)), amp, out);
+        frequency.link(phasor::frequency);
+        envelope.values().map(e -> e * e * gain).link(amp::level);
+        Data.link(fnIn, fnSink.input());
+    \}
+
+    @Override
+    public void update() \{
+        fn = fnSink.process(DoubleUnaryOperator.identity());
+    \}
+
+    @In(1) void note(String note) \{
+        if (note.isEmpty() || \"-\".equals(note)) \{
+            return;
+        \}
+        int midi = noteToMidi(note);
+        if (midi > 0) \{
+            noteOn(midi);
+        \} else \{
+            noteOff();
+        \}
+    \}
+    
+    void noteOn(int midi) \{
+        frequency.to(midiToFrequency(midi)).in(glide).ease();
+        envelope.to(1).in(0.05);
+    \}
+    
+    void noteOff() \{
+        envelope.to(0).in(0.2);
+    \}
+
+    
+"
+    .glide 0.3
+  }
+  @ ./synth2 audio:custom {
+    #%graph.x 427
+    #%graph.y 349
+    .code "
+
+    @Out(1) AudioOut out;
+    
+    
+    
+    @P(1) @Type.Number(min=0, max=1, def=1, skew=4)
+    double gain;
+    @P(2)    
+    @Type.Number(min = 0, max = 2, def = 0)
+    double glide;
+    
+    
+    @AuxIn(1) Data.In<DoubleUnaryOperator> fnIn;
+
+    @UGen Phasor phasor;
+    @UGen Gain amp;
+    
+    @Inject Property frequency;
+    @Inject Property envelope;
+    
+    @Inject Data.Sink<DoubleUnaryOperator> fnSink;
+    
+    DoubleUnaryOperator fn = DoubleUnaryOperator.identity();
+    
+    @Override
+    public void setup() \{
+        link(phasor, fn(d -> fn.applyAsDouble(d)), amp, out);
+        frequency.link(phasor::frequency);
+        envelope.values().map(e -> e * e * gain).link(amp::level);
+        Data.link(fnIn, fnSink.input());
+    \}
+
+    @Override
+    public void update() \{
+        fn = fnSink.process(DoubleUnaryOperator.identity());
+    \}
+
+    @In(1) void note(String note) \{
+        if (note.isEmpty() || \"-\".equals(note)) \{
+            return;
+        \}
+        int midi = noteToMidi(note);
+        if (midi > 0) \{
+            noteOn(midi);
+        \} else \{
+            noteOff();
+        \}
+    \}
+    
+    void noteOn(int midi) \{
+        frequency.to(midiToFrequency(midi)).in(glide).ease();
+        envelope.to(1).in(0.05);
+    \}
+    
+    void noteOff() \{
+        envelope.to(0).in(0.2);
+    \}
+
+    
+"
+    .glide 0.3
+  }
+  @ ./synth3 audio:custom {
+    #%graph.x 427
+    #%graph.y 548
+    .code "
+
+    @Out(1) AudioOut out;
+    
+    
+    
+    @P(1) @Type.Number(min=0, max=1, def=1, skew=4)
+    double gain;
+    @P(2)    
+    @Type.Number(min = 0, max = 2, def = 0)
+    double glide;
+    
+    
+    @AuxIn(1) Data.In<DoubleUnaryOperator> fnIn;
+
+    @UGen Phasor phasor;
+    @UGen Gain amp;
+    
+    @Inject Property frequency;
+    @Inject Property envelope;
+    
+    @Inject Data.Sink<DoubleUnaryOperator> fnSink;
+    
+    DoubleUnaryOperator fn = DoubleUnaryOperator.identity();
+    
+    @Override
+    public void setup() \{
+        link(phasor, fn(d -> fn.applyAsDouble(d)), amp, out);
+        frequency.link(phasor::frequency);
+        envelope.values().map(e -> e * e * gain).link(amp::level);
+        Data.link(fnIn, fnSink.input());
+    \}
+
+    @Override
+    public void update() \{
+        fn = fnSink.process(DoubleUnaryOperator.identity());
+    \}
+
+    @In(1) void note(String note) \{
+        if (note.isEmpty() || \"-\".equals(note)) \{
+            return;
+        \}
+        int midi = noteToMidi(note);
+        if (midi > 0) \{
+            noteOn(midi);
+        \} else \{
+            noteOff();
+        \}
+    \}
+    
+    void noteOn(int midi) \{
+        frequency.to(midiToFrequency(midi)).in(glide).ease();
+        envelope.to(1).in(0.05);
+    \}
+    
+    void noteOff() \{
+        envelope.to(0).in(0.2);
+    \}
+
+    
+"
+    .glide 0.3
+  }
+  @ ./timer-1 core:timing:timer {
+    #%graph.x 112
+    #%graph.y 755
+    .period 2
+  }
+  @ ./tracker-1 core:tracker {
+    #%graph.x 146
+    #%graph.y 305
+    .patterns "\" a3\" a2 . .
+. . c2 .
+\" d3\" . d2 .
+c3 e2 . .
+. . a3 .
+\" e3\" g2 b3 .
+.
+. . a3 .
+d2 a2 . .
+. . b3 .
+a3 d2 c4 .
+. e2 . .
+f3 a3 d4 .
+d3 . g4 .
+a3 d2 c4 .
+. . e4 .
+"
+  }
+  ~ ./mixer-6s!out-1 ./output!in-1
+  ~ ./mixer-6s!out-2 ./output!in-2
+  ~ ./synth1!out ./mixer-6s!in-1l
+  ~ ./synth1!out ./mixer-6s!in-1r
+  ~ ./fn-provider!fn ./synth1!fn-in
+  ~ ./synth2!out ./mixer-6s!in-2l
+  ~ ./synth2!out ./mixer-6s!in-2r
+  ~ ./synth3!out ./mixer-6s!in-3l
+  ~ ./synth3!out ./mixer-6s!in-3r
+  ~ ./fn-provider!fn ./synth2!fn-in
+  ~ ./fn-provider!fn ./synth3!fn-in
+  ~ ./timer-1!out ./tracker-1!trigger
+  ~ ./tracker-1!out-1 ./synth1!note
+  ~ ./tracker-1!out-2 ./synth2!note
+  ~ ./tracker-1!out-3 ./synth3!note
+}

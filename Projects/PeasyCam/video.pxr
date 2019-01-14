@@ -1,0 +1,64 @@
+@ /video root:video {
+  #%autostart true
+  #%praxis.version 4.1.1
+  .renderer OpenGL
+  .width 800
+  .height 600
+  .fps 60.0
+  @ ./screen video:output {
+    #%graph.x 393
+    #%graph.y 204
+    .always-on-top true
+    .show-cursor true
+  }
+  @ ./peasy video:gl:p3d {
+    #%graph.x 106
+    #%graph.y 101
+    .code "import peasy.PeasyCam;
+
+
+    @Inject Ref<PeasyCam> cam;
+
+    @In(1) PImage in;
+    
+    @Override
+    public void setup() \{
+        cam.init(() -> find(processing.core.PApplet.class)
+                .map(p5 -> new PeasyCam(p5, 500))
+                .orElseThrow(IllegalStateException::new))
+                .onDispose(c -> c.setActive(false));
+    \}
+
+    @Override
+    public void draw() \{
+        
+        find(processing.core.PGraphics.class)
+                .ifPresent(g -> cam.apply(c -> c.getState().apply(g)));
+        
+        lights();
+        
+        background(24);
+        stroke(0);
+        strokeWeight(0.5);
+        
+        sphereDetail((int)(abs(cos(millis() * 0.001)) * 36));
+        pushMatrix();
+        translate(-100, 0, 0);
+        fill(0,96,0);
+        sphere(100);
+        popMatrix();
+        
+        sphereDetail((int)(abs(sin(millis() * 0.001)) * 24));
+        pushMatrix();
+        translate(100, 0, 0);
+        rotateX(PI/2);
+        fill(255, 60, 120);
+        sphere(80);
+        popMatrix();
+
+    \}
+
+"
+  }
+  ~ ./peasy!out ./screen!in
+}

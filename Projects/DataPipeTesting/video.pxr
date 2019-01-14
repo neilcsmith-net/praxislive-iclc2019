@@ -1,0 +1,213 @@
+@ /video root:video {
+  #%autostart true
+  #%praxis.version 4.1.1
+  .renderer OpenGL
+  .width 800
+  .height 600
+  .fps 60.0
+  @ ./screen video:output {
+    #%graph.x 815
+    #%graph.y 183
+    .always-on-top true
+    .show-cursor true
+  }
+  @ ./p3d-1 video:gl:p3d {
+    #%graph.x 577
+    #%graph.y 233
+    .code "import processing.core.PGraphics;
+
+
+    @AuxIn(1) Data.In<PGraphics> graphics;
+    @AuxIn(2) Data.In<List<PVector>> vertices;
+    
+    @Inject Data.Sink<List<PVector>> verticeSink;
+    @Inject Data.Sink<PGraphics> graphicsSink;
+    
+    List<PVector> list;
+    
+    @Override
+    public void setup() \{
+        Data.link(graphics, graphicsSink.input());
+        Data.link(vertices, verticeSink.input());
+        verticeSink.onCreate(ArrayList::new)
+                .onClear(l -> \{l.clear(); return l;\})
+                .onAccumulate((l1, l2) -> \{l1.addAll(l2); return l1;\});
+        list = new ArrayList<>();
+                
+    \}
+
+    @Override
+    public void draw() \{
+        lights();
+        pushMatrix();
+        translate(width/2, height/2, -height/2);
+
+        rotateX(PI * sin(millis() * 0.0001));
+        rotateY(PI * sin(millis() * 0.00007));
+        rotateZ(PI * sin(millis() * 0.00012));
+
+        beginShape(QUAD_STRIP);
+        verticeSink.process(list).forEach(v -> \{
+            stroke(abs(v.x) * 255,100,abs(v.y) * 255);
+            fill(abs(v.x) * 255,100,abs(v.y) * 255, 100);
+            vertex(v.x * width/2, -v.z * width/4, v.y * height/2);
+            vertex(v.x * width/2, v.z * width/4, v.y * height/2);
+        \});
+        endShape();
+        popMatrix();
+        
+        graphicsSink.process(find(PGraphics.class).get());
+        
+        
+    \}
+"
+  }
+  @ ./custom-1 core:custom {
+    #%graph.x 334
+    #%graph.y 171
+    .code "import processing.core.PGraphics;
+
+
+    @In(1) Data.In<PGraphics> in;
+    @Out(1) Data.Out<PGraphics> out;
+     
+    @Override
+    public void init() \{
+        Data.link(
+                in,
+                Data.with(g -> \{
+                    g.fill(255,100,0);
+                    g.stroke(0);
+                    g.rotateY((float)map(g.parent.mouseX, 0, g.width, 0, TWO_PI));
+                    g.rotateX((float)map(g.parent.mouseY, 0, g.width, 0, TWO_PI));
+                    g.sphere(200);
+                \})
+                ,out);
+    \}
+
+"
+  }
+  @ ./translate core:custom {
+    #%graph.x 102
+    #%graph.y 119
+    .code "import processing.core.PGraphics;
+
+
+    @In(1) Data.In<PGraphics> in;
+    @Out(1) Data.Out<PGraphics> out;
+    
+    @P(1)    
+    @Type.Number(min = 0, max = 1, def = 0)
+    float x;
+    @P(2)    
+    @Type.Number(min = 0, max = 1, def = 0)
+    float y;
+    
+    
+    @Override
+    public void init() \{
+        Data.link(
+                in,
+                Data.with(g -> \{
+                    g.translate(x * g.width, y * g.height);
+                \})
+                ,out);
+    \}
+
+"
+    .x 0.5
+    .y 0.75
+  }
+  @ ./custom-3 core:custom {
+    #%graph.x 288
+    #%graph.y 362
+    .code "
+
+    @In(1) Data.In<List<PVector>> in;
+    @Out(1) Data.Out<List<PVector>> out;
+    
+    @P(1)    
+    @Type.Number(min = 0, max = 50, def = 1)
+    Property ratio;
+    
+    
+    @Override
+    public void init() \{
+        
+        Data.link(
+                in,
+                Data.with(l -> \{
+                    l.forEach(v -> v.x *= sin(v.y * d(ratio) ));
+                \}),
+                
+        out);
+        
+        ratio.animator().whenDone(p -> p.to(random(4,24)).in(random(2,7)).easeInOut());
+        
+    \}
+
+"
+    .ratio 18.062073854685273
+  }
+  @ ./custom-4 core:custom {
+    #%graph.x 77
+    #%graph.y 537
+    .code "
+
+    @Out(1) Data.Out<List<PVector>> out;
+    
+    List<PVector> vectors;
+    
+    @Override
+    public void init() \{
+        vectors = IntStream.rangeClosed(0,720).mapToObj(i -> new PVector()).collect(Collectors.toList());
+        Data.link(
+                
+                Data.supply(() -> IntStream.range(0, vectors.size())
+                        .mapToObj(i -> vectors.get(i).set(cos(radians(i*0.5)),sin(radians(i*0.5)),0))
+                        .collect(Collectors.toList())),
+                
+        out);
+    \}
+
+    
+"
+  }
+  @ ./custom-5 core:custom {
+    #%graph.x 480
+    #%graph.y 462
+    .code "
+
+    @In(1) Data.In<List<PVector>> in;
+    @Out(1) Data.Out<List<PVector>> out;
+    
+    @P(1)    
+    @Type.Number(min = 0, max = 50, def = 1)
+    Property ratio;
+    
+    
+    @Override
+    public void init() \{
+        
+        Data.link(
+                in,
+                Data.with(l -> \{
+                    l.forEach(v -> v.z = sin(v.y * d(ratio) ));
+                \}),
+                
+        out);
+        
+        ratio.animator().whenDone(p -> p.to(random(0.5,12)).in(random(2,5)).easeInOut());
+        
+    \}
+
+    
+"
+    .ratio 5.3406049451923145
+  }
+  ~ ./p3d-1!out ./screen!in
+  ~ ./translate!out ./custom-1!in
+  ~ ./custom-3!out ./custom-5!in
+  ~ ./custom-4!out ./custom-3!in
+  ~ ./custom-5!out ./p3d-1!vertices
+}

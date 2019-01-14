@@ -1,0 +1,167 @@
+@ /data root:data {
+  #%praxis.version 4.1.1
+  @ ./custom-1 core:custom {
+    #%graph.x 847
+    #%graph.y 113
+    .code "
+
+    @In(1) Data.In<int\[\]> in;
+    @Inject Data.Sink<int\[\]> sink;
+    
+    @Override
+    public void init() \{
+        Data.link(in, sink.input());
+        sink
+                .onCreate(i -> new int\[i.length\])
+//                .onValidate((dst, src) -> dst.length == src.length)
+                .onClear(i -> \{
+                    Arrays.fill(i, 0);
+                    return i;
+                \})
+                .onAccumulate((dst, src) -> \{
+                    for (int i = 0; i < dst.length; i++) \{
+                        if (i < src.length) \{
+                            dst\[i\] += src\[i\];
+                        \}
+                    \}
+                    return dst;
+                \});
+                
+    \}
+
+    @T(1) void trigger() \{
+        int\[\] data = new int\[8\];
+        data = sink.process(data);
+        log(INFO, Arrays.toString(data));
+    \}
+
+    
+"
+  }
+  @ ./custom-2 core:custom {
+    #%graph.x 383
+    #%graph.y 113
+    .code "
+
+    @Out(1)
+    Data.Out<int\[\]> out;
+
+    @Override
+    public void init() \{
+        Data.link(
+                Data.supply(() -> new int\[\]\{1,2,3,4,5,6\}),
+                Data.apply(i -> IntStream.of(i).map(ii -> ii + 100).toArray()),
+                out);
+    \} 
+    
+
+"
+  }
+  @ ./custom-3 core:custom {
+    #%graph.x 383
+    #%graph.y 226
+    .code "
+
+    @Out(1)
+    Data.Out<int\[\]> out;
+
+    @Override
+    public void init() \{
+        Data.link(Data.supply(() -> \{
+            int\[\] r = new int\[2\];
+            Arrays.fill(r, (int) random(100, 200));
+            return r;
+        \}), out);
+    \} 
+
+    @Override
+    public void update() \{
+
+    \}
+
+"
+  }
+  @ ./array-sink core:custom {
+    #%graph.x 842
+    #%graph.y 435
+    .code "
+
+    @In(1) Data.In<int\[\]> in;
+    
+    @Inject Data.Sink<int\[\]> sink;
+    
+    private int\[\] data = new int\[16\];
+    
+    @Override
+    public void init() \{
+        sink.onCreate(d -> new int\[d.length\])
+                .onValidate((d,s) -> s.length == d.length)
+                .onAccumulate((d,s) -> \{
+                    for (int i = 0; i < d.length; i++) \{
+                        d\[i\] += s\[i\];
+                    \}
+                    return d;
+                \})
+                .onClear(d -> \{
+                    Arrays.fill(d, 0);
+                    return d;
+                \});
+        
+        Data.link(in, sink.input());
+
+    \}
+
+    
+    @T(1) void process() \{
+        log(INFO, Arrays.toString(sink.process(data)));
+    \}
+    
+"
+  }
+  @ ./array-source core:custom {
+    #%graph.x 383
+    #%graph.y 447
+    .code "
+
+    @In(1) Data.In<int\[\]> in;
+    @Out(1) Data.Out<int\[\]> out;
+    
+    @Override
+    public void init() \{
+        Data.link(
+                in,
+                Data.with(d -> \{
+                    for (int i = 0; i < d.length; i++) \{
+                        d\[i\] += 5;
+                    \}
+                \})
+                , out);
+    \}
+
+"
+  }
+  @ ./array-random core:custom {
+    #%graph.x 402
+    #%graph.y 684
+    .code "
+
+    @Out(1) Data.Out<int\[\]> out;
+    
+    @Override
+    public void init() \{
+        Data.link(
+                Data.with(d -> \{
+                    for (int i = 0; i < d.length; i++) \{
+                        d\[i\] = randomOf(1,2,3,4,5);
+                    \}
+                \})
+                , out);
+    \}
+
+"
+  }
+  ~ ./custom-2!out ./custom-1!in
+  ~ ./custom-3!out ./custom-1!in
+  ~ ./array-source!out ./array-sink!in
+  ~ ./array-source!out ./array-source!in
+}

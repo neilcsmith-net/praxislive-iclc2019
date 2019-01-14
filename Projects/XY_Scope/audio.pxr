@@ -1,0 +1,47 @@
+@ /audio root:audio {
+  #%autostart true
+  #%praxis.version 4.0.0
+  @ ./output audio:output {
+    #%graph.x 1153
+    #%graph.y 100
+  }
+  @ ./input-1 audio:input {
+    #%graph.x 78
+    #%graph.y 225
+  }
+  @ ./player-1 audio:player {
+    #%graph.x 311
+    #%graph.y 50
+    .sample [file "resources/water drops ster eff.wav"]
+    .loop true
+  }
+  @ ./level-1 audio:analysis:level {
+    #%graph.x 542
+    #%graph.y 50
+  }
+  @ ./level-2 audio:analysis:level {
+    #%graph.x 542
+    #%graph.y 209
+  }
+  @ ./start-trigger-1 core:start-trigger {
+    #%graph.x 50
+    #%graph.y 50
+  }
+  @ ./send-1 core:routing:send {
+    #%graph.x 749
+    #%graph.y 150
+    .address /video/p2d-1.x
+  }
+  @ ./send-2 core:routing:send {
+    #%graph.x 749
+    #%graph.y 309
+    .address /video/p2d-1.y
+  }
+  ~ ./player-1!out-1 ./level-1!in
+  ~ ./level-1!out ./output!in-1
+  ~ ./player-1!out-2 ./level-2!in
+  ~ ./level-2!out ./output!in-2
+  ~ ./start-trigger-1!out ./player-1!play
+  ~ ./level-1!level ./send-1!in
+  ~ ./level-2!level ./send-2!in
+}
